@@ -216,6 +216,84 @@
   .grid-outer::-webkit-scrollbar { height: 3px; }
   .grid-outer::-webkit-scrollbar-track { background: transparent; }
   .grid-outer::-webkit-scrollbar-thumb { background: var(--border-mid); border-radius: 2px; }
+
+  /* ── Light theme ─────────────────────────────────── */
+  html.light {
+    --bg: #f5f5f4;
+    --surface: #ffffff;
+    --surface-2: #ebebeb;
+    --border: rgba(0,0,0,0.07);
+    --border-mid: rgba(0,0,0,0.13);
+    --border-strong: rgba(0,0,0,0.24);
+    --text: #1a1a1a;
+    --text-2: #666;
+    --text-3: #bbb;
+    --accent: #a06e28;
+  }
+  html.light .cell-R    { background: #fce8e8; color: #b03030; }
+  html.light .cell-l    { background: #efefef; color: #555; }
+  html.light .cell-K    { background: #efefef; color: #555; }
+  html.light .cell-RL   { background: #daeaf8; color: #1a56db; }
+  html.light .cell-RLl  { background: #daeaf8; color: #1a56db; }
+  html.light .cell-Rt   { background: #fef3c7; color: #92400e; }
+  html.light .cell-lt   { background: #fef3c7; color: #92400e; }
+  html.light .cell-Kt   { background: #fef3c7; color: #92400e; }
+  html.light .cell-H    { background: #d1fae5; color: #065f46; }
+  html.light .cell-empty { background: #e8e8e8; color: #ccc; }
+  html.light .cell-Rb   { background: #fce8e8; color: #b03030; outline-color: #b03030; }
+
+  /* ── Theme button ────────────────────────────────── */
+  .theme-btn {
+    margin-left: auto;
+    background: transparent;
+    border: 1px solid var(--border-mid);
+    border-radius: 4px;
+    color: var(--text-2);
+    cursor: pointer;
+    font-size: 12px;
+    padding: 4px 10px;
+    font-family: var(--sans);
+    transition: border-color 0.12s, color 0.12s;
+    white-space: nowrap;
+  }
+  .theme-btn:hover { border-color: var(--border-strong); color: var(--text); }
+
+  /* ── Focus button ────────────────────────────────── */
+  .ex-block { position: relative; }
+  .focus-btn {
+    position: absolute;
+    top: 0.65rem; right: 0.65rem;
+    background: transparent; border: none;
+    color: var(--text-3);
+    cursor: pointer;
+    font-size: 14px;
+    padding: 1px 4px;
+    line-height: 1;
+    border-radius: 3px;
+    transition: color 0.12s;
+  }
+  .focus-btn:hover { color: var(--text); }
+
+  /* ── Focus overlay ───────────────────────────────── */
+  #focus-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: var(--bg);
+    z-index: 1000;
+    align-items: center;
+    justify-content: center;
+    padding: 24px;
+    cursor: pointer;
+  }
+  #focus-content {
+    transform-origin: center center;
+    pointer-events: none;
+    cursor: default;
+  }
+  #focus-content .ex-block { margin-bottom: 0; }
+  #focus-content .focus-btn { display: none; }
+  #focus-content .grid-outer { overflow: visible; }
 </style>
 </head>
 <body>
@@ -224,6 +302,7 @@
   <div class="hdr-row">
     <span class="hdr-name">RLLK</span>
     <span class="hdr-title">Sticking Trainer</span>
+    <button class="theme-btn" id="theme-btn" onclick="toggleTheme()">☀ Lyst</button>
   </div>
   <div class="hdr-sub">Rotasjon · RL-innsetting · 3-grupper · Fri kombinasjon</div>
 </div>
@@ -387,6 +466,7 @@ function renderBlock(title, desc, takter, taktLabels, stacked) {
   }
 
   var html = '<div class="ex-block">';
+  html += '<button class="focus-btn" onclick="event.stopPropagation();openFocus(this.closest(\'.ex-block\'))">⤢</button>';
   html += '<div class="ex-title">' + title + '</div>';
   if (desc) html += '<div class="ex-desc">' + desc + '</div>';
   html += '<div class="grid-outer"><div style="min-width:max-content">';
@@ -545,6 +625,59 @@ function renderAll() {
 }
 
 renderAll();
+
+// ─── TEMA ────────────────────────────────────────────────
+function toggleTheme() {
+  var light = document.documentElement.classList.toggle('light');
+  document.getElementById('theme-btn').textContent = light ? '☾ Mørkt' : '☀ Lyst';
+  localStorage.setItem('rllk-theme', light ? 'light' : 'dark');
+}
+(function() {
+  if (localStorage.getItem('rllk-theme') === 'light') {
+    document.documentElement.classList.add('light');
+    document.addEventListener('DOMContentLoaded', function() {
+      var btn = document.getElementById('theme-btn');
+      if (btn) btn.textContent = '☾ Mørkt';
+    });
+  }
+})();
+
+// ─── FOKUS-MODUS ─────────────────────────────────────────
+function openFocus(blockEl) {
+  var overlay = document.getElementById('focus-overlay');
+  var content = document.getElementById('focus-content');
+  content.innerHTML = '';
+  content.appendChild(blockEl.cloneNode(true));
+  content.style.transform = 'scale(1)';
+  overlay.style.display = 'flex';
+  scaleFocus();
+  document.addEventListener('keydown', closeFocus);
+  window.addEventListener('resize', scaleFocus);
+}
+
+function scaleFocus() {
+  var content = document.getElementById('focus-content');
+  if (!content.firstChild) return;
+  content.style.transform = 'scale(1)';
+  var w = content.offsetWidth;
+  var h = content.offsetHeight;
+  if (!w || !h) return;
+  var pad = 48;
+  var scale = Math.min((window.innerWidth - pad) / w, (window.innerHeight - pad) / h);
+  scale = Math.min(Math.max(scale, 0.4), 5);
+  content.style.transform = 'scale(' + scale + ')';
+}
+
+function closeFocus() {
+  var overlay = document.getElementById('focus-overlay');
+  overlay.style.display = 'none';
+  document.getElementById('focus-content').innerHTML = '';
+  document.removeEventListener('keydown', closeFocus);
+  window.removeEventListener('resize', scaleFocus);
+}
 </script>
+<div id="focus-overlay" onclick="closeFocus()">
+  <div id="focus-content"></div>
+</div>
 </body>
 </html>
