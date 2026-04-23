@@ -649,7 +649,7 @@ function toggleTheme() {
 
 // ─── FOKUS-MODUS ─────────────────────────────────────────
 document.addEventListener('click', function(e) {
-  if (document.getElementById('focus-overlay').style.display !== 'none') return;
+  if (e.target.closest('#focus-overlay')) return;
   var block = e.target.closest('.ex-block');
   if (block) openFocus(block);
 });
