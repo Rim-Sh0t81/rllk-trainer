@@ -1,0 +1,788 @@
+<!DOCTYPE html>
+<html lang="no">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>RllK Trainer</title>
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#111111">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="RllK">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+/* ─── TOKENS ──────────────────────────────────────────────────────────────── */
+:root {
+  --bg:          #111111;
+  --bg2:         #1c1c1e;
+  --bg3:         #2c2c2e;
+  --bg4:         #3a3a3c;
+  --fg:          #f5f5f7;
+  --fg2:         rgba(245,245,247,0.72);
+  --fg3:         #8e8e93;
+  --border:      rgba(255,255,255,0.07);
+  --border2:     rgba(255,255,255,0.14);
+  --accent:      #c8a050;
+  --accent-dim:  rgba(200,160,80,0.12);
+  --accent-glow: rgba(200,160,80,0.22);
+
+  /* Hit colors */
+  --R:    #c0392b;
+  --R-bg: rgba(192,57,43,0.15);
+  --R-br: rgba(192,57,43,0.45);
+  --l:    #444444;
+  --l-bg: rgba(120,120,128,0.14);
+  --l-br: rgba(120,120,128,0.28);
+  --K:    #7d6548;
+  --K-bg: rgba(125,101,72,0.18);
+  --K-br: rgba(125,101,72,0.45);
+  --RL:   #2a6db5;
+  --RL-bg:rgba(42,109,181,0.15);
+  --RL-br:rgba(42,109,181,0.45);
+  --Tri:  #b5762a;
+  --T-bg: rgba(181,118,42,0.16);
+  --T-br: rgba(181,118,42,0.45);
+  --H:    #2a9b6b;
+  --H-bg: rgba(42,155,107,0.14);
+  --H-br: rgba(42,155,107,0.40);
+
+  /* Spacing */
+  --r-sm: 8px;
+  --r-md: 12px;
+  --r-lg: 16px;
+
+  /* Typography */
+  --sans: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  --mono: 'JetBrains Mono', 'Fira Code', monospace;
+
+  /* Cell */
+  --cw: 30px;
+  --ch: 30px;
+
+  /* Easing */
+  --ease: cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+@media (prefers-color-scheme: light) {
+  :root {
+    --bg:       #f2f2f7;
+    --bg2:      #ffffff;
+    --bg3:      #e5e5ea;
+    --bg4:      #d1d1d6;
+    --fg:       #1c1c1e;
+    --fg2:      rgba(28,28,30,0.72);
+    --fg3:      #8e8e93;
+    --border:   rgba(0,0,0,0.07);
+    --border2:  rgba(0,0,0,0.14);
+    --accent:   #a07820;
+    --accent-dim: rgba(160,120,32,0.10);
+    --accent-glow:rgba(160,120,32,0.20);
+    --l:        #6e6e73;
+    --l-bg:     rgba(110,110,115,0.10);
+    --l-br:     rgba(110,110,115,0.25);
+  }
+}
+
+/* ─── RESET & BASE ────────────────────────────────────────────────────────── */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html { scroll-behavior: smooth; -webkit-text-size-adjust: 100%; }
+body {
+  font-family: var(--sans);
+  background: var(--bg);
+  color: var(--fg);
+  min-height: 100dvh;
+  padding: env(safe-area-inset-top, 0) env(safe-area-inset-right, 0) env(safe-area-inset-bottom, 0) env(safe-area-inset-left, 0);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* ─── LAYOUT ──────────────────────────────────────────────────────────────── */
+.app {
+  max-width: 860px;
+  margin: 0 auto;
+  padding: 28px 20px 60px;
+}
+@media (max-width: 480px) {
+  .app { padding: 20px 14px 48px; }
+}
+
+/* ─── HEADER ──────────────────────────────────────────────────────────────── */
+.header {
+  margin-bottom: 28px;
+  display: flex;
+  align-items: baseline;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+.header-wordmark {
+  font-family: var(--mono);
+  font-size: 22px;
+  font-weight: 500;
+  letter-spacing: -0.02em;
+  color: var(--fg);
+  line-height: 1;
+}
+.header-wordmark span { color: var(--accent); }
+.header-sub {
+  font-size: 12px;
+  font-weight: 500;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--fg3);
+  line-height: 1;
+}
+
+/* ─── LEGEND ──────────────────────────────────────────────────────────────── */
+.legend {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+  margin-bottom: 20px;
+}
+.leg-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 4px 9px 4px 6px;
+  border-radius: 20px;
+  border: 1px solid var(--border2);
+  background: var(--bg2);
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--fg2);
+  white-space: nowrap;
+  font-family: var(--sans);
+}
+.leg-dot {
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+.dot-R   { background: var(--R); }
+.dot-l   { background: var(--fg3); }
+.dot-K   { background: var(--K); }
+.dot-RL  { background: var(--RL); }
+.dot-tri { background: var(--Tri); }
+.dot-H   { background: var(--H); }
+.dot-Rb  { background: var(--R); outline: 2px solid var(--R); outline-offset: 1px; }
+
+/* ─── HH CONTROLS ─────────────────────────────────────────────────────────── */
+.controls {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 20px;
+  flex-wrap: wrap;
+}
+.ctrl-label {
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--fg3);
+  white-space: nowrap;
+}
+.seg-ctrl {
+  display: flex;
+  gap: 2px;
+  background: var(--bg2);
+  border: 1px solid var(--border2);
+  border-radius: var(--r-md);
+  padding: 3px;
+}
+.seg-btn {
+  font-family: var(--sans);
+  font-size: 11.5px;
+  font-weight: 500;
+  padding: 5px 12px;
+  border: none;
+  border-radius: var(--r-sm);
+  background: transparent;
+  color: var(--fg3);
+  cursor: pointer;
+  transition: all 180ms var(--ease);
+  white-space: nowrap;
+  -webkit-tap-highlight-color: transparent;
+}
+.seg-btn:hover { color: var(--fg); }
+.seg-btn.on {
+  background: var(--accent);
+  color: #111;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.3);
+}
+
+/* ─── TAB BAR ─────────────────────────────────────────────────────────────── */
+.tab-bar {
+  display: flex;
+  gap: 4px;
+  margin-bottom: 24px;
+  border-bottom: 1px solid var(--border);
+  padding-bottom: 0;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+}
+.tab-bar::-webkit-scrollbar { display: none; }
+.tab-btn {
+  font-family: var(--sans);
+  font-size: 13px;
+  font-weight: 500;
+  padding: 9px 15px 10px;
+  border: none;
+  background: transparent;
+  color: var(--fg3);
+  cursor: pointer;
+  white-space: nowrap;
+  border-radius: var(--r-sm) var(--r-sm) 0 0;
+  position: relative;
+  transition: color 200ms var(--ease);
+  -webkit-tap-highlight-color: transparent;
+}
+.tab-btn::after {
+  content: '';
+  position: absolute;
+  bottom: -1px;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: var(--accent);
+  border-radius: 2px 2px 0 0;
+  transform: scaleX(0);
+  transition: transform 200ms var(--ease);
+}
+.tab-btn:hover { color: var(--fg2); }
+.tab-btn.on { color: var(--fg); }
+.tab-btn.on::after { transform: scaleX(1); }
+
+/* ─── SECTION TITLE ───────────────────────────────────────────────────────── */
+.sec-title {
+  font-size: 10.5px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--fg3);
+  margin-bottom: 16px;
+  padding-left: 1px;
+}
+
+/* ─── EXERCISE BLOCK ──────────────────────────────────────────────────────── */
+.ex-block {
+  background: var(--bg2);
+  border: 1px solid var(--border);
+  border-radius: var(--r-lg);
+  padding: 18px 18px 16px;
+  margin-bottom: 12px;
+  transition: border-color 220ms var(--ease), box-shadow 220ms var(--ease);
+}
+.ex-block:hover {
+  border-color: var(--border2);
+  box-shadow: 0 4px 20px rgba(0,0,0,0.18);
+}
+.ex-title {
+  font-size: 13.5px;
+  font-weight: 600;
+  color: var(--fg);
+  margin-bottom: 5px;
+  letter-spacing: -0.01em;
+}
+.ex-desc {
+  font-size: 12px;
+  color: var(--fg3);
+  line-height: 1.55;
+  margin-bottom: 14px;
+}
+
+/* ─── GRID OUTER ──────────────────────────────────────────────────────────── */
+.grid-outer {
+  overflow-x: auto;
+  overflow-y: hidden;
+  padding-bottom: 2px;
+  margin: 0 -2px;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+  /* Fade right edge to hint scroll */
+  -webkit-mask-image: linear-gradient(to right, black calc(100% - 20px), transparent 100%);
+  mask-image: linear-gradient(to right, black calc(100% - 20px), transparent 100%);
+}
+.grid-outer::-webkit-scrollbar { display: none; }
+.grid-wrap { min-width: max-content; padding: 0 2px 2px; }
+
+/* ─── GRID ROWS ───────────────────────────────────────────────────────────── */
+.grid-row {
+  display: flex;
+  align-items: stretch;
+  margin-bottom: 3px;
+  font-family: var(--mono);
+}
+.row-lbl {
+  width: 32px;
+  min-width: 32px;
+  font-size: 10px;
+  font-weight: 500;
+  color: var(--fg3);
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  padding-right: 8px;
+  letter-spacing: 0.02em;
+  flex-shrink: 0;
+}
+
+/* Beat number row */
+.bn-row { display: flex; align-items: center; margin-bottom: 4px; font-family: var(--mono); }
+.bn {
+  width: var(--cw);
+  flex-shrink: 0;
+  text-align: center;
+  font-size: 9px;
+  color: var(--fg3);
+  font-weight: 400;
+  line-height: 1;
+  padding-bottom: 2px;
+}
+.bn.beat {
+  font-size: 10px;
+  font-weight: 600;
+  color: var(--fg2);
+}
+.bn.plus { opacity: 0.55; }
+
+/* Takt label row */
+.tlbl-row { display: flex; align-items: center; margin-bottom: 3px; font-family: var(--mono); }
+.tlbl {
+  text-align: center;
+  font-size: 9px;
+  font-weight: 500;
+  color: var(--accent);
+  letter-spacing: 0.03em;
+  flex-shrink: 0;
+  padding-bottom: 2px;
+  opacity: 0.85;
+}
+
+/* Gap between tacts */
+.tgap { width: 10px; flex-shrink: 0; }
+
+/* ─── CELLS ───────────────────────────────────────────────────────────────── */
+.cell {
+  width: var(--cw);
+  height: var(--ch);
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 10.5px;
+  font-weight: 500;
+  font-family: var(--mono);
+  border-radius: 5px;
+  position: relative;
+  border: 1px solid transparent;
+  transition: transform 120ms var(--ease), box-shadow 120ms var(--ease), opacity 120ms var(--ease);
+  cursor: default;
+}
+.cell:hover { transform: scale(1.07); z-index: 1; }
+
+/* Beat / takt separators */
+.cell.beat-start { margin-left: 3px; }
+.cell.takt-start { margin-left: 0; }
+
+/* Beat groups — subtle left border via box-shadow */
+.cell.beat-start::before {
+  content: '';
+  position: absolute;
+  left: -3px;
+  top: 10%;
+  height: 80%;
+  width: 1px;
+  background: var(--border2);
+  border-radius: 1px;
+}
+.cell.takt-start::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 0;
+  height: 100%;
+  width: 2px;
+  background: var(--border2);
+  border-radius: 2px 0 0 2px;
+  opacity: 0.6;
+}
+
+/* ─── CELL TYPES ──────────────────────────────────────────────────────────── */
+.cell-R {
+  background: var(--R-bg);
+  border-color: var(--R-br);
+  color: var(--R);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.04);
+}
+.cell-R:hover { box-shadow: 0 0 10px rgba(192,57,43,0.35), inset 0 1px 0 rgba(255,255,255,0.06); }
+
+.cell-l {
+  background: var(--l-bg);
+  border-color: var(--l-br);
+  color: var(--fg3);
+}
+
+.cell-K {
+  background: var(--K-bg);
+  border-color: var(--K-br);
+  color: var(--K);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.04);
+}
+.cell-K:hover { box-shadow: 0 0 10px rgba(125,101,72,0.35), inset 0 1px 0 rgba(255,255,255,0.06); }
+
+.cell-RL {
+  background: var(--RL-bg);
+  border-color: var(--RL-br);
+  color: var(--RL);
+  font-size: 8.5px;
+  letter-spacing: -0.03em;
+}
+.cell-RL:hover { box-shadow: 0 0 10px rgba(42,109,181,0.35); }
+
+.cell-Rt, .cell-lt, .cell-Kt {
+  background: var(--T-bg);
+  border-color: var(--T-br);
+  color: var(--Tri);
+}
+.cell-lt { font-style: italic; }
+
+.cell-H {
+  background: var(--H-bg);
+  border-color: var(--H-br);
+  color: var(--H);
+  font-size: 9.5px;
+}
+
+.cell-empty {
+  background: transparent;
+  border-color: var(--border);
+  color: var(--border2);
+  font-size: 8px;
+  opacity: 0.45;
+}
+
+.cell-Rb {
+  background: var(--R-bg);
+  color: var(--R);
+  border-color: var(--R);
+  box-shadow: 0 0 0 1.5px var(--R) inset;
+}
+.cell-Rb:hover { box-shadow: 0 0 0 1.5px var(--R) inset, 0 0 12px rgba(192,57,43,0.4); }
+
+/* ─── MOBILE ──────────────────────────────────────────────────────────────── */
+@media (max-width: 520px) {
+  :root {
+    --cw: 24px;
+    --ch: 26px;
+  }
+  .cell { font-size: 9.5px; border-radius: 4px; }
+  .cell.beat-start { margin-left: 2px; }
+  .tgap { width: 7px; }
+  .ex-block { padding: 14px 13px 13px; }
+  .ex-title { font-size: 12.5px; }
+  .ex-desc { font-size: 11px; margin-bottom: 11px; }
+  .row-lbl { width: 26px; min-width: 26px; font-size: 9px; padding-right: 6px; }
+  .bn { font-size: 8px; }
+  .bn.beat { font-size: 9px; }
+}
+</style>
+</head>
+<body>
+<div class="app">
+
+  <!-- Header -->
+  <header class="header">
+    <div class="header-wordmark"><span>R</span>ll<span>K</span></div>
+    <div class="header-sub">Sticking Trainer</div>
+  </header>
+
+  <!-- Legend -->
+  <div class="legend">
+    <div class="leg-pill"><div class="leg-dot dot-R"></div>R — høyre</div>
+    <div class="leg-pill"><div class="leg-dot dot-l"></div>l — venstre</div>
+    <div class="leg-pill"><div class="leg-dot dot-K"></div>K — bass</div>
+    <div class="leg-pill"><div class="leg-dot dot-RL"></div>RL — innsetting</div>
+    <div class="leg-pill"><div class="leg-dot dot-tri"></div>3-gruppe</div>
+    <div class="leg-pill"><div class="leg-dot dot-H"></div>HH fot</div>
+    <div class="leg-pill"><div class="leg-dot dot-Rb"></div>R overgang</div>
+  </div>
+
+  <!-- HH Controls -->
+  <div class="controls">
+    <div class="ctrl-label">Hihat fot</div>
+    <div class="seg-ctrl">
+      <button class="seg-btn on"  onclick="setHH('4',this)">4-deler</button>
+      <button class="seg-btn"     onclick="setHH('8',this)">8-deler</button>
+      <button class="seg-btn"     onclick="setHH('8up',this)">Offbeat</button>
+      <button class="seg-btn"     onclick="setHH('off',this)">Av</button>
+    </div>
+  </div>
+
+  <!-- Tab Bar -->
+  <nav class="tab-bar">
+    <button class="tab-btn on" onclick="showTab('rot',this)">Rotasjon</button>
+    <button class="tab-btn"    onclick="showTab('rl',this)">RL-innsetting</button>
+    <button class="tab-btn"    onclick="showTab('tri',this)">3-grupper</button>
+    <button class="tab-btn"    onclick="showTab('fri',this)">Fri kombinasjon</button>
+  </nav>
+
+  <!-- Tab Content -->
+  <div id="tab-rot"></div>
+  <div id="tab-rl"  style="display:none"></div>
+  <div id="tab-tri" style="display:none"></div>
+  <div id="tab-fri" style="display:none"></div>
+
+</div>
+
+<script>
+var hhMode = '4';
+var BASE = ['R','l','l','K'];
+
+function getCW() {
+  return parseInt(getComputedStyle(document.documentElement).getPropertyValue('--cw')) || 30;
+}
+
+function setHH(m, btn) {
+  hhMode = m;
+  document.querySelectorAll('.seg-btn').forEach(b => b.classList.remove('on'));
+  btn.classList.add('on');
+  renderAll();
+}
+
+function showTab(name, btn) {
+  ['rot','rl','tri','fri'].forEach(t => {
+    document.getElementById('tab-' + t).style.display = 'none';
+  });
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('on'));
+  document.getElementById('tab-' + name).style.display = 'block';
+  btn.classList.add('on');
+}
+
+function hhVal(i) {
+  var p = i % 16;
+  if (hhMode === '4')   return (p===0||p===4||p===8||p===12) ? 'H' : 'empty';
+  if (hhMode === '8')   return (p % 2 === 0) ? 'H' : 'empty';
+  if (hhMode === '8up') return (p===2||p===6||p===10||p===14) ? 'H' : 'empty';
+  return 'empty';
+}
+
+function cClass(v) {
+  var m = {R:'cell-R',l:'cell-l',K:'cell-K',RL:'cell-RL',Rt:'cell-Rt',lt:'cell-lt',Kt:'cell-Kt',H:'cell-H',Rb:'cell-Rb'};
+  return m[v] || 'cell-empty';
+}
+function cText(v) {
+  if (v === 'H')     return '×';
+  if (v === 'empty') return '·';
+  if (v === 'Rb')    return 'R';
+  return v;
+}
+function rep(arr, n) { var o=[]; for(var i=0;i<n;i++) o=o.concat(arr); return o; }
+function rot(arr, n) {
+  var a = arr.slice();
+  n = ((n % 4) + 4) % 4;
+  for (var i = 0; i < n; i++) a.push(a.shift());
+  return a;
+}
+
+function renderBlock(title, desc, takter, taktLabels) {
+  var numT = takter.length;
+  var cw = getCW();
+
+  var tlHtml = '';
+  if (taktLabels) {
+    tlHtml = '<div class="tlbl-row"><div class="row-lbl" style="visibility:hidden"></div>';
+    takter.forEach(function(seg, ti) {
+      tlHtml += '<div class="tlbl" style="width:' + (seg.length * cw) + 'px">' + (taktLabels[ti]||'') + '</div>';
+      if (ti < numT-1) tlHtml += '<div class="tgap"></div>';
+    });
+    tlHtml += '</div>';
+  }
+
+  var bnHtml = '<div class="bn-row"><div class="row-lbl" style="visibility:hidden"></div>';
+  takter.forEach(function(seg, ti) {
+    seg.forEach(function(v, i) {
+      var txt = '', cls = 'bn';
+      if (i%4===0)      { txt = (i/4+1); cls = 'bn beat'; }
+      else if (i%2===0) { txt = '+';     cls = 'bn plus'; }
+      bnHtml += '<div class="' + cls + '">' + txt + '</div>';
+    });
+    if (ti < numT-1) bnHtml += '<div class="tgap"></div>';
+  });
+  bnHtml += '</div>';
+
+  function makeRow(label, rowTakter) {
+    var html = '<div class="grid-row"><div class="row-lbl">' + label + '</div>';
+    rowTakter.forEach(function(seg, ti) {
+      seg.forEach(function(v, i) {
+        var extra = '';
+        if (i === 0)      extra = ' takt-start';
+        else if (i%4===0) extra = ' beat-start';
+        html += '<div class="cell ' + cClass(v) + extra + '">' + cText(v) + '</div>';
+      });
+      if (ti < numT-1) html += '<div class="tgap"></div>';
+    });
+    html += '</div>';
+    return html;
+  }
+
+  var hhTakter = takter.map(function(seg) {
+    return seg.map(function(v, i) { return hhVal(i); });
+  });
+
+  var html = '<div class="ex-block">';
+  html += '<div class="ex-title">' + title + '</div>';
+  if (desc) html += '<div class="ex-desc">' + desc + '</div>';
+  html += '<div class="grid-outer"><div class="grid-wrap">';
+  if (tlHtml) html += tlHtml;
+  html += bnHtml;
+  html += makeRow('Hånd', takter);
+  if (hhMode !== 'off') html += makeRow('HH', hhTakter);
+  html += '</div></div></div>';
+  return html;
+}
+
+function t16(fig) { return rep(fig, 4); }
+
+// ─── ROTASJON ────────────────────────────────────────────────────────────────
+
+function renderRot() {
+  var html = '<div class="sec-title">Rotasjon av RllK — startpunktet flyttes ett slag per øvelse</div>';
+
+  var names = ['RllK','llKR','lKRl','KRll'];
+  var descs = [
+    'Grunnfiguren. Lær den til fingrene sitter.',
+    'Starter på l. R faller på 16dels-posisjon 4.',
+    'Starter på l. R faller på posisjon 3.',
+    'Starter på K. R faller på posisjon 2.',
+  ];
+  for (var i = 0; i < 4; i++) {
+    html += renderBlock('Nr.' + (i+1) + ' — ' + names[i] + ' × 4', descs[i], [t16(rot(BASE, i))]);
+  }
+
+  var fwdTakter = [
+    ['R','l','l','K', 'R','l','l','K', 'R','l','l','K', 'R','l','l','K'],
+    ['Rb','R','l','l', 'K','R','l','l', 'K','R','l','l', 'K','R','l','l'],
+    ['K','Rb','R','l', 'l','K','R','l', 'l','K','R','l', 'l','K','R','l'],
+    ['l','K','Rb','R', 'l','l','K','R', 'l','l','K','R', 'l','l','K','R'],
+    ['R','l','l','K', 'R','l','l','K', 'R','l','l','K', 'R','l','l','K'],
+  ];
+  html += renderBlock(
+    'Overgangsstudie — fremover (ekstra R)',
+    'Et ekstra R-slag (markert med rød kant) presses inn i strømmen og vandrer én posisjon fremover per takt. 5 takter — starter og ender på RllK.',
+    fwdTakter,
+    ['RllK×4', 'RRll→KRll', 'KRRl→lKRl', 'lKRR→llKR', 'RllK×4']
+  );
+
+  var bwdTakter = [
+    t16(rot(BASE, 0)),
+    t16(rot(BASE, 1)),
+    t16(rot(BASE, 2)),
+    t16(rot(BASE, 3)),
+    t16(rot(BASE, 0)),
+  ];
+  html += renderBlock(
+    'Overgangsstudie — bakover (naturlig rotasjon)',
+    'Én rotasjon bakover per takt — ingen ekstra slag. RllK → llKR → lKRl → KRll → tilbake til RllK.',
+    bwdTakter,
+    ['RllK×4', 'llKR×4', 'lKRl×4', 'KRll×4', 'RllK×4']
+  );
+
+  document.getElementById('tab-rot').innerHTML = html;
+}
+
+// ─── RL-INNSETTING ───────────────────────────────────────────────────────────
+
+function renderRL() {
+  var html = '<div class="sec-title">RL-innsetting — ekstra RL forskyver det som følger</div>';
+  html += renderBlock('Referanse — RllK × 4', 'Grunnfiguren.', [t16(BASE)]);
+
+  var ins = [
+    { t:'Nr.1 — RL etter pos 4',  d:'RllK · RL · RllK · RllK — siste figur kuttes til Rll.',
+      p:['R','l','l','K','RL','R','l','l','K','R','l','l','K','R','l','l'] },
+    { t:'Nr.2 — RL etter pos 8',  d:'RllK · RllK · RL · RllK.',
+      p:['R','l','l','K','R','l','l','K','RL','R','l','l','K','R','l','l'] },
+    { t:'Nr.3 — RL etter pos 12', d:'RllK · RllK · RllK · RL · R — sterkest følbar forskyvning.',
+      p:['R','l','l','K','R','l','l','K','R','l','l','K','RL','R','l','l'] },
+    { t:'Nr.4 — To RL-innsettinger', d:'Akkumulert forskyvning.',
+      p:['R','l','l','K','RL','R','l','l','K','RL','R','l','l','R','l','l'] },
+    { t:'Nr.5 — Start på RL', d:'Tvetydighet om downbeat.',
+      p:['RL','R','l','l','K','R','l','l','K','R','l','l','K','R','l','l'] },
+  ];
+  ins.forEach(function(x) { html += renderBlock(x.t, x.d, [x.p]); });
+  document.getElementById('tab-rl').innerHTML = html;
+}
+
+// ─── 3-GRUPPER ───────────────────────────────────────────────────────────────
+
+function renderTri() {
+  var html = '<div class="sec-title">3-grupper — Rll og RLK i 3-over-4 feel</div>';
+  var r3 = ['Rt','lt','lt'], k3 = ['Rt','lt','Kt'];
+  var rll16 = [], rlk16 = [];
+  for (var i = 0; i < 16; i++) { rll16.push(r3[i%3]); rlk16.push(k3[i%3]); }
+
+  html += renderBlock('Nr.1 — Rll 3-gruppe over 4/4',
+    'Rll repeteres i 16-dels-posisjon. 3 mot 4 gir polyrhytmisk spenning. Full syklus tar 3 takter (48 slag).', [rll16]);
+  html += renderBlock('Nr.2 — RLK 3-gruppe over 4/4',
+    'Som Rll men med bass på tredje slag. Krevende koordinasjon — start sakte.', [rlk16]);
+  html += renderBlock('Nr.3 — RllK → Rll 3-gruppe',
+    'To takter. Tren på det eksakte byttepunktet.',
+    [t16(BASE), rll16], ['RllK', '→Rll']);
+  html += renderBlock('Nr.4 — Rll 3-gruppe → tilbake til RllK',
+    'Finn downbeat etter 3-gruppen. Øv til du lander uten å telle.',
+    [rll16, t16(BASE)], ['Rll', '→RllK']);
+  html += renderBlock('Nr.5 — Bland Rll og RLK i én takt',
+    'Fri veksling mellom 3-gruppene.',
+    [['Rt','lt','lt','Rt','lt','Kt','Rt','lt','lt','Rt','lt','Kt','Rt','lt','lt','Rt']]);
+
+  document.getElementById('tab-tri').innerHTML = html;
+}
+
+// ─── FRI KOMBINASJON ─────────────────────────────────────────────────────────
+
+function renderFri() {
+  var html = '<div class="sec-title">Fri kombinasjon — improvisasjonsmaler</div>';
+
+  html += renderBlock('Mal 1 — Rotasjon + RL-innsetting',
+    'RllK → llKR → RL-innsetting → RllK. Én mulig improvisasjonsbue.',
+    [['R','l','l','K','l','l','K','R','RL','R','l','l','K','R','l','l']]);
+  html += renderBlock('Mal 2 — RllK → Rll 3-gruppe → RL → RllK',
+    'Beveg deg ut i 3-gruppen, bruk RL til å lande tilbake.',
+    [['R','l','l','K','R','l','l','K','Rt','lt','lt','RL','R','l','l','K']]);
+  html += renderBlock('Mal 3 — lKRl → RLK 3-gruppe → RllK',
+    'Start offbeat (rotasjon 2), gå inn i bass-3-gruppe, avslutt med grunnfigur.',
+    [['l','K','R','l','l','K','R','l','Rt','lt','Kt','Rt','R','l','l','K']]);
+  html += renderBlock('Mal 4 — R-overgang + RL-innsetting',
+    'Kombinér fremover-rotasjon og RL i én takt.',
+    [['R','l','l','K','Rb','R','l','l','K','R','l','l','K','RL','R','l','l']]);
+
+  document.getElementById('tab-fri').innerHTML = html;
+}
+
+function renderAll() {
+  renderRot();
+  renderRL();
+  renderTri();
+  renderFri();
+}
+
+renderAll();
+
+// Re-render on resize so cell widths update
+var resizeTimer;
+window.addEventListener('resize', function() {
+  clearTimeout(resizeTimer);
+  resizeTimer = setTimeout(renderAll, 120);
+});
+
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('./sw.js');
+}
+</script>
+</body>
+</html>

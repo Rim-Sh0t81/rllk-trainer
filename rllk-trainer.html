@@ -1,0 +1,550 @@
+<!DOCTYPE html>
+<html lang="no">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>RLLK Sticking Trainer</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg:             #0d0d0d;
+    --surface:        #161616;
+    --surface-2:      #1e1e1e;
+    --border:         rgba(255,255,255,0.06);
+    --border-mid:     rgba(255,255,255,0.10);
+    --border-strong:  rgba(255,255,255,0.20);
+    --text:           #dedede;
+    --text-2:         #6e6e6e;
+    --text-3:         #333;
+    --accent:         #c88a38;
+    --mono: 'JetBrains Mono', ui-monospace, 'Cascadia Code', monospace;
+    --sans: system-ui, -apple-system, sans-serif;
+  }
+
+  body {
+    font-family: var(--sans);
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+  }
+
+  /* ── Header ─────────────────────────────────────── */
+  .hdr {
+    padding: 2rem 2.5rem 1.75rem;
+    max-width: 980px;
+    margin: 0 auto;
+    border-bottom: 1px solid var(--border);
+  }
+  .hdr-row {
+    display: flex; align-items: baseline; gap: 10px;
+    margin-bottom: 5px;
+  }
+  .hdr-name {
+    font-family: var(--mono);
+    font-size: 22px; font-weight: 700;
+    color: var(--accent);
+    letter-spacing: 0.04em;
+  }
+  .hdr-title {
+    font-size: 15px; font-weight: 400;
+    color: var(--text);
+    letter-spacing: 0.01em;
+  }
+  .hdr-sub {
+    font-size: 11.5px; color: var(--text-2);
+    letter-spacing: 0.05em;
+  }
+
+  /* ── Wrap ────────────────────────────────────────── */
+  .wrap {
+    max-width: 980px;
+    margin: 0 auto;
+    padding: 1.75rem 2.5rem 4rem;
+  }
+
+  /* ── Legend ──────────────────────────────────────── */
+  .legend { display: flex; flex-wrap: wrap; gap: 5px; margin-bottom: 1.5rem; }
+  .li {
+    display: flex; align-items: center; gap: 5px;
+    font-size: 11px; color: var(--text-2);
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    padding: 3px 9px 3px 6px;
+  }
+  .ld { width: 9px; height: 9px; border-radius: 2px; flex-shrink: 0; }
+  .ld-R  { background: #3a1818; border: 1px solid #7a3535; }
+  .ld-l  { background: #282828; border: 1px solid #444; }
+  .ld-K  { background: #28241a; border: 1px solid #5a5238; }
+  .ld-RL { background: #0d1e2e; border: 1px solid #285080; }
+  .ld-T  { background: #28180a; border: 1px solid #7a5020; }
+  .ld-H  { background: #0a1e18; border: 1px solid #206848; }
+  .ld-Rx { background: #3a1818; border: 2px solid #d06060; }
+
+  /* ── Controls ────────────────────────────────────── */
+  .controls {
+    display: flex; flex-wrap: wrap; gap: 24px;
+    align-items: flex-start;
+    margin-bottom: 1.5rem;
+    padding: 1rem 1.25rem;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+  }
+  .ctrl-group { display: flex; flex-direction: column; gap: 8px; }
+  .ctrl-label {
+    font-size: 10px; font-weight: 500;
+    letter-spacing: 0.1em; text-transform: uppercase;
+    color: var(--text-2);
+  }
+  .ctrl-opts { display: flex; gap: 3px; }
+  .cbtn {
+    font-size: 11.5px; padding: 4px 12px;
+    border: 1px solid var(--border-mid);
+    border-radius: 4px;
+    background: transparent;
+    color: var(--text-2);
+    cursor: pointer;
+    font-family: var(--sans);
+    transition: border-color 0.12s, color 0.12s, background 0.12s;
+  }
+  .cbtn:hover { border-color: var(--border-strong); color: var(--text); }
+  .cbtn.on {
+    background: var(--surface-2);
+    color: var(--text);
+    border-color: var(--border-strong);
+    font-weight: 500;
+  }
+
+  /* ── Tab bar ─────────────────────────────────────── */
+  .tab-bar {
+    display: flex;
+    margin-bottom: 1.75rem;
+    border-bottom: 1px solid var(--border);
+  }
+  .tab {
+    font-size: 13px; padding: 8px 16px;
+    background: transparent; border: none;
+    border-bottom: 2px solid transparent;
+    color: var(--text-2); cursor: pointer;
+    font-family: var(--sans);
+    margin-bottom: -1px;
+    transition: color 0.12s, border-color 0.12s;
+    white-space: nowrap;
+  }
+  .tab:hover { color: var(--text); }
+  .tab.on {
+    color: var(--text);
+    border-bottom-color: var(--accent);
+    font-weight: 500;
+  }
+
+  /* ── Stacked takt layout ─────────────────────────── */
+  .takt-sep  { height: 10px; }
+  .stacked-lbl {
+    font-size: 10px; font-family: var(--mono);
+    color: var(--text-2); margin-bottom: 3px;
+    padding-top: 2px;
+  }
+
+  /* ── Section title ───────────────────────────────── */
+  .sec-title {
+    font-size: 10.5px; font-weight: 500;
+    color: var(--text-2);
+    letter-spacing: 0.09em; text-transform: uppercase;
+    margin-bottom: 1rem;
+  }
+
+  /* ── Exercise block ──────────────────────────────── */
+  .ex-block {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 1.1rem 1.3rem;
+    margin-bottom: 0.6rem;
+  }
+  .ex-title {
+    font-size: 13px; font-weight: 600;
+    color: var(--text); margin-bottom: 0.3rem;
+  }
+  .ex-desc {
+    font-size: 11.5px; color: var(--text-2);
+    margin-bottom: 0.85rem; line-height: 1.6;
+  }
+
+  /* ── Grid ────────────────────────────────────────── */
+  .grid-outer { overflow-x: auto; padding-bottom: 4px; }
+  .grid-row {
+    display: flex; align-items: center;
+    margin-bottom: 2px; min-width: max-content;
+    font-family: var(--mono);
+  }
+  .row-lbl {
+    font-size: 10px; color: var(--text-2);
+    width: 34px; text-align: right; padding-right: 8px;
+    flex-shrink: 0; letter-spacing: 0.03em;
+  }
+  .cell {
+    width: 28px; height: 26px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 11px; font-weight: 600; flex-shrink: 0;
+    border-right: 1px solid var(--border);
+    border-bottom: 1px solid var(--border);
+  }
+  .cell.beat-start { border-left: 2px solid var(--border-mid); }
+  .cell.takt-start { border-left: 3px solid var(--border-strong); }
+
+  .cell-R    { background: #2a1212; color: #e05555; }
+  .cell-l    { background: var(--surface); color: var(--text-2); }
+  .cell-K    { background: var(--surface); color: var(--text-2); }
+  .cell-RL   { background: #0c1c2c; color: #5888d0; }
+  .cell-RLl  { background: #0c1c2c; color: #5888d0; }
+  .cell-Rt   { background: #221408; color: #d89050; }
+  .cell-lt   { background: #221408; color: #b07038; font-style: italic; }
+  .cell-Kt   { background: #221408; color: #b07038; }
+  .cell-H    { background: #0a1c18; color: #46b888; font-size: 10px; }
+  .cell-empty { background: #131313; color: var(--text-3); }
+  .cell-Rb   { background: #2a1414; color: #d87070; outline: 2px solid #b04848; outline-offset: -2px; }
+
+  .bn { width: 28px; text-align: center; font-size: 9px; color: var(--text-3); flex-shrink: 0; }
+  .bn.beat { font-weight: 600; color: var(--text-2); font-size: 9.5px; }
+  .bn.plus { color: var(--text-3); }
+  .tgap  { width: 8px; flex-shrink: 0; }
+  .tlbl  { font-size: 9px; color: var(--text-2); text-align: center; flex-shrink: 0; padding-bottom: 2px; font-family: var(--mono); }
+
+  .grid-outer::-webkit-scrollbar { height: 3px; }
+  .grid-outer::-webkit-scrollbar-track { background: transparent; }
+  .grid-outer::-webkit-scrollbar-thumb { background: var(--border-mid); border-radius: 2px; }
+</style>
+</head>
+<body>
+
+<div class="hdr">
+  <div class="hdr-row">
+    <span class="hdr-name">RLLK</span>
+    <span class="hdr-title">Sticking Trainer</span>
+  </div>
+  <div class="hdr-sub">Rotasjon · RL-innsetting · 3-grupper · Fri kombinasjon</div>
+</div>
+
+<div class="wrap">
+
+<div class="legend">
+  <div class="li"><div class="ld ld-R"></div><span style="color:#d87070">R — høyre</span></div>
+  <div class="li"><div class="ld ld-l"></div><span>L — venstre</span></div>
+  <div class="li"><div class="ld ld-K"></div><span style="color:#b8ad88">K — bass</span></div>
+  <div class="li"><div class="ld ld-RL"></div><span style="color:#5888d0">RL — innsetting</span></div>
+  <div class="li"><div class="ld ld-T"></div><span style="color:#d89050">3-gruppe</span></div>
+  <div class="li"><div class="ld ld-H"></div><span style="color:#46b888">HH fot</span></div>
+  <div class="li"><div class="ld ld-Rx"></div><span style="color:#d87070">R overgang</span></div>
+</div>
+
+<div class="controls">
+  <div class="ctrl-group">
+    <div class="ctrl-label">Hihat fot</div>
+    <div class="ctrl-opts">
+      <button class="cbtn on" onclick="setHH('4',this)">4-deler</button>
+      <button class="cbtn" onclick="setHH('8',this)">8-deler</button>
+      <button class="cbtn" onclick="setHH('8up',this)">8dels upbeat (+)</button>
+      <button class="cbtn" onclick="setHH('off',this)">Av</button>
+    </div>
+  </div>
+</div>
+
+<div class="tab-bar">
+  <button class="tab on" onclick="showTab('rot',this)">Rotasjon</button>
+  <button class="tab" onclick="showTab('rl',this)">RL-innsetting</button>
+  <button class="tab" onclick="showTab('tri',this)">3-grupper</button>
+  <button class="tab" onclick="showTab('fri',this)">Fri kombinasjon</button>
+</div>
+
+<div id="tab-rot"></div>
+<div id="tab-rl" style="display:none"></div>
+<div id="tab-tri" style="display:none"></div>
+<div id="tab-fri" style="display:none"></div>
+
+</div>
+
+<script>
+var hhMode = '4';
+var BASE = ['R','l','l','K'];
+
+function setHH(m, btn) {
+  hhMode = m;
+  document.querySelectorAll('.cbtn').forEach(b => b.classList.remove('on'));
+  btn.classList.add('on');
+  renderAll();
+}
+
+function showTab(name, btn) {
+  ['rot','rl','tri','fri'].forEach(t => {
+    document.getElementById('tab-' + t).style.display = 'none';
+  });
+  document.querySelectorAll('.tab').forEach(b => b.classList.remove('on'));
+  document.getElementById('tab-' + name).style.display = 'block';
+  btn.classList.add('on');
+}
+
+function hhVal(i) {
+  var p = i % 16;
+  if (hhMode === '4')   return (p===0||p===4||p===8||p===12) ? 'H' : 'empty';
+  if (hhMode === '8')   return (p % 2 === 0) ? 'H' : 'empty';
+  if (hhMode === '8up') return (p===2||p===6||p===10||p===14) ? 'H' : 'empty';
+  return 'empty';
+}
+
+function cClass(v) {
+  var m = {R:'cell-R',l:'cell-l',K:'cell-K',RL:'cell-RL',Ri:'cell-RL',Li:'cell-RLl',Rt:'cell-Rt',lt:'cell-lt',Kt:'cell-Kt',H:'cell-H',Rb:'cell-Rb'};
+  return m[v] || 'cell-empty';
+}
+function cText(v) {
+  if (v === 'H')              return 'x';
+  if (v === 'empty')          return '·';
+  if (v === 'l' || v === 'lt') return 'L';
+  if (v === 'Rb' || v === 'Rt') return 'R';
+  if (v === 'Kt')             return 'K';
+  if (v === 'Ri')             return 'R';
+  if (v === 'Li')             return 'L';
+  return v;
+}
+function rep(arr, n) { var o=[]; for(var i=0;i<n;i++) o=o.concat(arr); return o; }
+function rot(arr, n) {
+  var a = arr.slice();
+  n = ((n % 4) + 4) % 4;
+  for (var i = 0; i < n; i++) a.push(a.shift());
+  return a;
+}
+
+function renderBlock(title, desc, takter, taktLabels, stacked) {
+  var numT = takter.length;
+  var tlHtml = '';
+  if (taktLabels) {
+    tlHtml = '<div class="grid-row"><div class="row-lbl" style="visibility:hidden"></div>';
+    takter.forEach(function(seg, ti) {
+      tlHtml += '<div class="tlbl" style="width:' + (seg.length * 28) + 'px">' + (taktLabels[ti]||'') + '</div>';
+      if (ti < numT-1) tlHtml += '<div class="tgap"></div>';
+    });
+    tlHtml += '</div>';
+  }
+
+  var bnHtml = '<div class="grid-row"><div class="row-lbl" style="visibility:hidden"></div>';
+  takter.forEach(function(seg, ti) {
+    seg.forEach(function(v, i) {
+      var txt = '', cls = 'bn';
+      if (i%4===0)      { txt = (i/4+1); cls = 'bn beat'; }
+      else if (i%2===0) { txt = '+';     cls = 'bn plus'; }
+      bnHtml += '<div class="' + cls + '">' + txt + '</div>';
+    });
+    if (ti < numT-1) bnHtml += '<div class="tgap"></div>';
+  });
+  bnHtml += '</div>';
+
+  function makeRow(label, rowTakter) {
+    var html = '<div class="grid-row"><div class="row-lbl">' + label + '</div>';
+    rowTakter.forEach(function(seg, ti) {
+      seg.forEach(function(v, i) {
+        var extra = '';
+        if (i === 0)      extra = ' takt-start';
+        else if (i%4===0) extra = ' beat-start';
+        html += '<div class="cell ' + cClass(v) + extra + '">' + cText(v) + '</div>';
+      });
+      if (ti < numT-1) html += '<div class="tgap"></div>';
+    });
+    html += '</div>';
+    return html;
+  }
+
+  var hhTakter = takter.map(function(seg) {
+    return seg.map(function(v, i) { return hhVal(i); });
+  });
+
+  if (stacked) {
+    var sh = '<div class="ex-block">';
+    sh += '<div class="ex-title">' + title + '</div>';
+    if (desc) sh += '<div class="ex-desc">' + desc + '</div>';
+    takter.forEach(function(seg, ti) {
+      if (ti > 0) sh += '<div class="takt-sep"></div>';
+      if (taktLabels && taktLabels[ti]) {
+        sh += '<div class="stacked-lbl">' + taktLabels[ti] + '</div>';
+      }
+      var bnRow = '<div class="grid-row"><div class="row-lbl" style="visibility:hidden"></div>';
+      seg.forEach(function(v, i) {
+        var txt = '', cls = 'bn';
+        if (i%4===0)      { txt = (i/4+1); cls = 'bn beat'; }
+        else if (i%2===0) { txt = '+';     cls = 'bn plus'; }
+        bnRow += '<div class="' + cls + '">' + txt + '</div>';
+      });
+      bnRow += '</div>';
+      sh += '<div class="grid-outer"><div style="min-width:max-content">';
+      sh += bnRow;
+      sh += makeRow('Hånd', [seg]);
+      if (hhMode !== 'off') sh += makeRow('HH', [seg.map(function(v, i) { return hhVal(i); })]);
+      sh += '</div></div>';
+    });
+    sh += '</div>';
+    return sh;
+  }
+
+  var html = '<div class="ex-block">';
+  html += '<div class="ex-title">' + title + '</div>';
+  if (desc) html += '<div class="ex-desc">' + desc + '</div>';
+  html += '<div class="grid-outer"><div style="min-width:max-content">';
+  if (tlHtml) html += tlHtml;
+  html += bnHtml;
+  html += makeRow('Hånd', takter);
+  if (hhMode !== 'off') html += makeRow('HH', hhTakter);
+  html += '</div></div></div>';
+  return html;
+}
+
+function t16(fig) { return rep(fig, 4); }
+
+// ─── ROTASJON ───────────────────────────────────────────
+
+function renderRot() {
+  var html = '<div class="sec-title">Rotasjon av RLLK — startpunktet flyttes ett slag per øvelse</div>';
+
+  var names = ['RLLK','LLKR','LKRL','KRLL'];
+  var descs = [
+    'Grunnfiguren. Lær den til fingrene sitter.',
+    'Starter på L. R faller på 16dels-posisjon 4.',
+    'Starter på L. R faller på posisjon 3.',
+    'Starter på K. R faller på posisjon 2.',
+  ];
+  for (var i = 0; i < 4; i++) {
+    html += renderBlock('Nr.' + (i+1) + ' — ' + names[i] + ' × 4', descs[i], [t16(rot(BASE, i))]);
+  }
+
+  var fwdTakter = [
+    ['R','l','l','K', 'R','l','l','K', 'R','l','l','K', 'R','l','l','K'],
+    ['Rb','R','l','l', 'K','R','l','l', 'K','R','l','l', 'K','R','l','l'],
+    ['K','Rb','R','l', 'l','K','R','l', 'l','K','R','l', 'l','K','R','l'],
+    ['l','K','Rb','R', 'l','l','K','R', 'l','l','K','R', 'l','l','K','R'],
+    ['R','l','l','K', 'R','l','l','K', 'R','l','l','K', 'R','l','l','K'],
+  ];
+  html += renderBlock(
+    'Overgangsstudie — fremover (ekstra R)',
+    'Ett ekstra R-slag (rød ramme) presses inn i strømmen og vandrer én posisjon fremover per takt. ' +
+    'R-et skyver rotasjonen ett hakk fremover. 5 takter — starter og ender på RLLK.',
+    fwdTakter,
+    ['RLLK×4', 'RRLL→KRLL', 'KRRL→LKRL', 'LKRR→LLKR', 'RLLK×4'],
+    true
+  );
+
+  var bwdTakter = [
+    t16(rot(BASE, 0)),
+    t16(rot(BASE, 1)),
+    t16(rot(BASE, 2)),
+    t16(rot(BASE, 3)),
+    t16(rot(BASE, 0)),
+  ];
+  html += renderBlock(
+    'Overgangsstudie — bakover (naturlig rotasjon)',
+    'Én rotasjon bakover per takt — ingen ekstra slag. ' +
+    'RLLK → LLKR → LKRL → KRLL → tilbake til RLLK. 5 takter.',
+    bwdTakter,
+    ['RLLK×4', 'LLKR×4', 'LKRL×4', 'KRLL×4', 'RLLK×4'],
+    true
+  );
+
+  document.getElementById('tab-rot').innerHTML = html;
+}
+
+// ─── RL-INNSETTING ──────────────────────────────────────
+
+function renderRL() {
+  var html = '<div class="sec-title">RL-innsetting — ekstra RL forskyver det som følger</div>';
+  html += renderBlock('Referanse — RLLK × 4', 'Grunnfiguren.', [t16(BASE)]);
+
+  function makeRL(base, pos) {
+    var stream = rep(base, 5);
+    return stream.slice(0, pos).concat(['Ri','Li']).concat(stream.slice(pos, 15));
+  }
+
+  var rotations = [
+    { name: 'RLLK', base: ['R','l','l','K'] },
+    { name: 'LLKR', base: ['l','l','K','R'] },
+    { name: 'LKRL', base: ['l','K','R','l'] },
+    { name: 'KRLL', base: ['K','R','l','l'] },
+  ];
+  var posDescs = {
+    4:  'Innsetting etter første gruppe.',
+    8:  'Innsetting etter andre gruppe.',
+    12: 'Innsetting etter tredje gruppe.',
+  };
+
+  rotations.forEach(function(rot, ri) {
+    var mt = ri > 0 ? ' style="margin-top:1rem"' : '';
+    html += '<div class="sec-title"' + mt + '>' + rot.name + '</div>';
+    [4, 8, 12].forEach(function(pos) {
+      html += renderBlock('RL etter pos ' + pos, posDescs[pos], [makeRL(rot.base, pos)]);
+    });
+  });
+
+  html += '<div class="sec-title" style="margin-top:1rem">Spesielle tilfeller</div>';
+  html += renderBlock('To RL-innsettinger', 'Akkumulert forskyvning.',
+    [['R','l','l','K','Ri','Li','R','l','l','K','Ri','Li','R','l','l','R','l','l']]);
+  html += renderBlock('Start på RL', 'Tvetydighet om downbeat.',
+    [['Ri','Li','R','l','l','K','R','l','l','K','R','l','l','K','R','l','l']]);
+
+  document.getElementById('tab-rl').innerHTML = html;
+}
+
+// ─── 3-GRUPPER ──────────────────────────────────────────
+
+function renderTri() {
+  var html = '<div class="sec-title">3-grupper — RLL og RLK i 3-over-4 feel</div>';
+  var r3 = ['Rt','lt','lt'], k3 = ['Rt','lt','Kt'];
+  var rll16 = [], rlk16 = [];
+  for (var i = 0; i < 16; i++) { rll16.push(r3[i%3]); rlk16.push(k3[i%3]); }
+
+  html += renderBlock('Nr.1 — RLL 3-gruppe over 4/4',
+    'RLL repeteres i 16-dels-posisjon. 3 mot 4 gir polyrhytmisk spenning. Full syklus tar 3 takter (48 slag).', [rll16]);
+  html += renderBlock('Nr.2 — RLK 3-gruppe over 4/4',
+    'Som RLL men med bass på tredje slag. Krevende koordinasjon — start sakte.', [rlk16]);
+  html += renderBlock('Nr.3 — RLLK → RLL 3-gruppe',
+    'To takter. Tren på det eksakte byttepunktet.',
+    [t16(BASE), rll16], ['RLLK', '→RLL']);
+  html += renderBlock('Nr.4 — RLL 3-gruppe → tilbake til RLLK',
+    'Finn downbeat etter 3-gruppen. Øv til du lander uten å telle.',
+    [rll16, t16(BASE)], ['RLL', '→RLLK']);
+  html += renderBlock('Nr.5 — Bland RLL og RLK i én takt',
+    'Fri veksling mellom 3-gruppene.',
+    [['Rt','lt','lt','Rt','lt','Kt','Rt','lt','lt','Rt','lt','Kt','Rt','lt','lt','Rt']]);
+
+  document.getElementById('tab-tri').innerHTML = html;
+}
+
+// ─── FRI KOMBINASJON ────────────────────────────────────
+
+function renderFri() {
+  var html = '<div class="sec-title">Fri kombinasjon — improvisasjonsmaler</div>';
+
+  html += renderBlock('Mal 1 — Rotasjon + RL-innsetting',
+    'RLLK → LLKR → RL-innsetting → RLLK. Én mulig improvisasjonsbue.',
+    [['R','l','l','K','l','l','K','R','Ri','Li','R','l','l','K','R','l','l']]);
+  html += renderBlock('Mal 2 — RLLK → RLL 3-gruppe → RL → RLLK',
+    'Beveg deg ut i 3-gruppen, bruk RL til å lande tilbake.',
+    [['R','l','l','K','R','l','l','K','Rt','lt','lt','Ri','Li','R','l','l','K']]);
+  html += renderBlock('Mal 3 — LKRL → RLK 3-gruppe → RLLK',
+    'Start offbeat (rotasjon 2), gå inn i bass-3-gruppe, avslutt med grunnfigur.',
+    [['l','K','R','l','l','K','R','l','Rt','lt','Kt','Rt','R','l','l','K']]);
+  html += renderBlock('Mal 4 — R-overgang + RL-innsetting',
+    'Kombinér fremover-rotasjon og RL i én takt.',
+    [['R','l','l','K','Rb','R','l','l','K','R','l','l','K','Ri','Li','R','l','l']]);
+
+  document.getElementById('tab-fri').innerHTML = html;
+}
+
+function renderAll() {
+  renderRot();
+  renderRL();
+  renderTri();
+  renderFri();
+}
+
+renderAll();
+</script>
+</body>
+</html>
