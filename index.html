@@ -258,21 +258,9 @@
   }
   .theme-btn:hover { border-color: var(--border-strong); color: var(--text); }
 
-  /* ── Focus button ────────────────────────────────── */
-  .ex-block { position: relative; }
-  .focus-btn {
-    position: absolute;
-    top: 0.65rem; right: 0.65rem;
-    background: transparent; border: none;
-    color: var(--text-3);
-    cursor: pointer;
-    font-size: 14px;
-    padding: 1px 4px;
-    line-height: 1;
-    border-radius: 3px;
-    transition: color 0.12s;
-  }
-  .focus-btn:hover { color: var(--text); }
+  /* ── Exercise block tap-to-focus ─────────────────── */
+  .ex-block { cursor: pointer; transition: border-color 0.12s; }
+  .ex-block:hover { border-color: var(--border-strong); }
 
   /* ── Focus overlay ───────────────────────────────── */
   #focus-overlay {
@@ -484,7 +472,6 @@ function renderBlock(title, desc, takter, taktLabels, stacked) {
   }
 
   var html = '<div class="ex-block">';
-  html += '<button class="focus-btn" onclick="event.stopPropagation();openFocus(this.closest(\'.ex-block\'))">⤢</button>';
   html += '<div class="ex-title">' + title + '</div>';
   if (desc) html += '<div class="ex-desc">' + desc + '</div>';
   html += '<div class="grid-outer"><div style="min-width:max-content">';
@@ -661,6 +648,12 @@ function toggleTheme() {
 })();
 
 // ─── FOKUS-MODUS ─────────────────────────────────────────
+document.addEventListener('click', function(e) {
+  if (document.getElementById('focus-overlay').style.display !== 'none') return;
+  var block = e.target.closest('.ex-block');
+  if (block) openFocus(block);
+});
+
 var focusBlocks = [];
 var focusIdx = 0;
 var touchStartX = 0, touchStartY = 0;
