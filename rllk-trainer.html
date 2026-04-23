@@ -294,6 +294,24 @@
   #focus-content .ex-block { margin-bottom: 0; }
   #focus-content .focus-btn { display: none; }
   #focus-content .grid-outer { overflow: visible; }
+
+  /* ── Focus navigation ────────────────────────────── */
+  .focus-nav {
+    position: fixed;
+    top: 50%; transform: translateY(-50%);
+    background: transparent; border: none;
+    color: var(--text-3);
+    font-size: 28px; line-height: 1;
+    padding: 20px 14px;
+    cursor: pointer;
+    z-index: 1001;
+    transition: color 0.12s;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .focus-nav:hover { color: var(--text); }
+  #focus-prev { left: 0; }
+  #focus-next { right: 0; }
+  .focus-nav[hidden] { display: none; }
 </style>
 </head>
 <body>
@@ -643,41 +661,93 @@ function toggleTheme() {
 })();
 
 // ─── FOKUS-MODUS ─────────────────────────────────────────
+var focusBlocks = [];
+var focusIdx = 0;
+var touchStartX = 0, touchStartY = 0;
+
 function openFocus(blockEl) {
+  focusBlocks = [];
+  ['rot','rl','tri','fri'].forEach(function(t) {
+    var tab = document.getElementById('tab-' + t);
+    if (tab && tab.style.display !== 'none') {
+      focusBlocks = Array.prototype.slice.call(tab.querySelectorAll('.ex-block'));
+    }
+  });
+  focusIdx = focusBlocks.indexOf(blockEl);
+  if (focusIdx < 0) focusIdx = 0;
+  showFocusAt(focusIdx);
+  document.addEventListener('keydown', handleFocusKey);
+  window.addEventListener('resize', scaleFocus);
+  var ov = document.getElementById('focus-overlay');
+  ov.addEventListener('touchstart', onTouchStart, { passive: true });
+  ov.addEventListener('touchend', onTouchEnd);
+}
+
+function showFocusAt(idx) {
   var overlay = document.getElementById('focus-overlay');
   var content = document.getElementById('focus-content');
   content.innerHTML = '';
-  content.appendChild(blockEl.cloneNode(true));
+  content.appendChild(focusBlocks[idx].cloneNode(true));
   content.style.transform = 'scale(1)';
   overlay.style.display = 'flex';
+  document.getElementById('focus-prev').hidden = (idx === 0);
+  document.getElementById('focus-next').hidden = (idx === focusBlocks.length - 1);
   scaleFocus();
-  document.addEventListener('keydown', closeFocus);
-  window.addEventListener('resize', scaleFocus);
+}
+
+function navigateFocus(dir) {
+  var next = focusIdx + dir;
+  if (next < 0 || next >= focusBlocks.length) return;
+  focusIdx = next;
+  showFocusAt(focusIdx);
 }
 
 function scaleFocus() {
   var content = document.getElementById('focus-content');
   if (!content.firstChild) return;
   content.style.transform = 'scale(1)';
-  var w = content.offsetWidth;
-  var h = content.offsetHeight;
+  var w = content.offsetWidth, h = content.offsetHeight;
   if (!w || !h) return;
-  var pad = 48;
+  var pad = 80;
   var scale = Math.min((window.innerWidth - pad) / w, (window.innerHeight - pad) / h);
-  scale = Math.min(Math.max(scale, 0.4), 5);
-  content.style.transform = 'scale(' + scale + ')';
+  content.style.transform = 'scale(' + Math.min(Math.max(scale, 0.4), 5) + ')';
+}
+
+function handleFocusKey(e) {
+  if (e.key === 'ArrowRight') { navigateFocus(1); return; }
+  if (e.key === 'ArrowLeft')  { navigateFocus(-1); return; }
+  closeFocus();
+}
+
+function onTouchStart(e) {
+  touchStartX = e.changedTouches[0].clientX;
+  touchStartY = e.changedTouches[0].clientY;
+}
+
+function onTouchEnd(e) {
+  var dx = e.changedTouches[0].clientX - touchStartX;
+  var dy = e.changedTouches[0].clientY - touchStartY;
+  if (Math.abs(dx) > Math.abs(dy) && Math.abs(dx) > 40) {
+    navigateFocus(dx < 0 ? 1 : -1);
+  } else if (Math.abs(dx) < 10 && Math.abs(dy) < 10) {
+    closeFocus();
+  }
 }
 
 function closeFocus() {
-  var overlay = document.getElementById('focus-overlay');
-  overlay.style.display = 'none';
+  var ov = document.getElementById('focus-overlay');
+  ov.style.display = 'none';
   document.getElementById('focus-content').innerHTML = '';
-  document.removeEventListener('keydown', closeFocus);
+  document.removeEventListener('keydown', handleFocusKey);
   window.removeEventListener('resize', scaleFocus);
+  ov.removeEventListener('touchstart', onTouchStart);
+  ov.removeEventListener('touchend', onTouchEnd);
 }
 </script>
-<div id="focus-overlay" onclick="closeFocus()">
+<div id="focus-overlay">
+  <button id="focus-prev" class="focus-nav" hidden onclick="event.stopPropagation();navigateFocus(-1)">‹</button>
   <div id="focus-content"></div>
+  <button id="focus-next" class="focus-nav" hidden onclick="event.stopPropagation();navigateFocus(1)">›</button>
 </div>
 </body>
 </html>
