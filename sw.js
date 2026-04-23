@@ -1,4 +1,4 @@
-const CACHE = 'rllk-v1';
+const CACHE = 'rllk-v2';
 const FILES = [
   './index.html',
   './manifest.json',

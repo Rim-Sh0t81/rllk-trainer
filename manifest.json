@@ -1,12 +1,12 @@
 {
-  "name": "RllK Sticking Trainer",
-  "short_name": "RllK",
-  "description": "Treningsverktøy for RllK-figuren — rotasjon, RL-innsetting, 3-grupper",
+  "name": "RLLK Sticking Trainer",
+  "short_name": "RLLK",
+  "description": "Treningsverktøy for RLLK-figuren — rotasjon, RL-innsetting, 3-grupper",
   "start_url": "./index.html",
   "display": "standalone",
-  "orientation": "portrait-primary",
-  "background_color": "#1a1a1a",
-  "theme_color": "#1a1a1a",
+  "orientation": "any",
+  "background_color": "#0d0d0d",
+  "theme_color": "#0d0d0d",
   "icons": [
     {
       "src": "icons/icon-192.png",
@@ -19,6 +19,12 @@
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "any maskable"
+    },
+    {
+      "src": "icons/apple-touch-icon.png",
+      "sizes": "180x180",
+      "type": "image/png",
+      "purpose": "any"
     }
   ]
 }
